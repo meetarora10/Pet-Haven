@@ -55,6 +55,15 @@ def home():
     services = Service.query.all()
     return render_template('index.html', services=services)
 
+@app.route('/admin')
+def admin():
+    services = Service.query.all()
+    return render_template('admin.html', services=services)
+
+@app.route('/add_competition')
+def add_competition():
+    return render_template('add_competition.html')
+
 @app.route('/events')
 def events():
     return render_template('events.html')

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dog Competition Registration</title>
+    <link rel="stylesheet" href="../static/css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <div class="main">
+        <nav>
+          <ul>
+            <li>
+              <a href="{{ url_for('schedule') }}" style="text-decoration: none"
+                >Schedule</a
+              >
+            </li>
+            <li>
+              <a href="{{ url_for('myevents') }}" style="text-decoration: none"
+                >My Events</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('add_competition') }}"
+                style="text-decoration: none"
+                >add_competition</a
+              >
+            </li>
+          </ul>
+        </nav>
+        <h1>Dog Competition Registration and Scheduling</h1>
+      </div>
+    </header>
+
+    <div class="container">
+      <section class="competition-overview">
+        <h2>Competition Categories</h2>
+        <div class="cards">
+          {% for service in services %}
+          <div class="card">
+            <h3>{{ service.title }}</h3>
+            <p><strong>Date:</strong> {{ service.date }}</p>
+            <p><strong>Time: </strong> {{ service.time }}</p>
+            <p><strong>Description: </strong> {{ service.description }}</p>
+            <button>
+              <a
+                href="{{ url_for('register', service_id=service.id) }}"
+                style="text-decoration: none"
+                >Join Event</a
+              >
+            </button>
+          </div>
+          {% else %}
+          <p>No services available</p>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <script src="../static/js/script.js"></script>
+  </body>
+</html>
