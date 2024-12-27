@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash,jsonify
 from flask_sqlalchemy import SQLAlchemy
 import logging
-
+from datetime import datetime
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -59,11 +59,80 @@ def home():
 def admin():
     services = Service.query.all()
     return render_template('admin.html', services=services)
-
+def validate_service_data(title, date, time, description):
+    errors = []
+    
+    if not title or len(title.strip()) < 3:
+        errors.append("Title must be at least 3 characters long")
+        
+    try:
+        datetime.strptime(date, '%d-%m-%Y')
+    except ValueError:
+        errors.append("Date must be in DD-MM-YYYY format")
+        
+    try:
+        datetime.strptime(time.lower(), '%I:%M %p')
+    except ValueError:
+        errors.append("Time must be in HH:MM am/pm format (e.g., 10:00 am)")
+        
+    if not description or len(description.strip()) < 10:
+        errors.append("Description must be at least 10 characters long")
+        
+    return errors
 @app.route('/add_competition')
 def add_competition():
+    if request.method == 'POST':
+        try:
+            # Get form data
+            title = request.form.get('title', '').strip()
+            date = request.form.get('date', '').strip()
+            time = request.form.get('time', '').strip()
+            description = request.form.get('description', '').strip()
+            
+            # Validate input
+            errors = validate_service_data(title, date, time, description)
+            
+            if errors:
+                for error in errors:
+                    flash(error, 'danger')
+                return redirect(url_for('add_competition'))
+                
+            # Create new service
+            new_service = Service(
+                title=title,
+                date=date,
+                time=time,
+                description=description
+            )
+            
+            # Add to database
+            db.session.add(new_service)
+            db.session.commit()
+            
+            flash('New event added successfully!', 'success')
+            return redirect(url_for('admin'))
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error adding new service: {str(e)}")
+            flash('An error occurred while adding the event', 'danger')
+            return redirect(url_for('add_competition'))
+    
+    # GET request - show the form
     return render_template('add_competition.html')
-
+@app.route('/delete_competition/<int:service_id>', methods=['POST'])
+def delete_competition(service_id):
+    try:
+        service = Service.query.get_or_404(service_id)
+        db.session.delete(service)
+        db.session.commit()
+        flash('Event deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting service: {str(e)}")
+        flash('Failed to delete event', 'danger')
+    
+    return redirect(url_for('admin'))
 @app.route('/events')
 def events():
     return render_template('events.html')
