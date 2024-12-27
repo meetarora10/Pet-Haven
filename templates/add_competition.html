@@ -53,6 +53,11 @@
         font-size: 0.9em;
         margin-top: 5px;
       }
+      /* .success {
+        color: green;
+        font-size: 0.9em;
+        margin-top: 5px;
+      } */
     </style>
   </head>
   <body>
@@ -60,7 +65,15 @@
     <p>Add a new competition using the form below:</p>
 
     <div class="form-container">
-      <form id="competitionForm" method="POST">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form id="competitionForm" method="POST" action="{{ url_for('add_competition') }}">
         <label for="competition_name">Competition Name:</label>
         <input
           type="text"
@@ -91,56 +104,45 @@
 
         <div id="errorMessages" class="error"></div>
         <button type="submit">Add Competition</button>
-        <a href="{{ url_for('admin') }}" class="btn btn-secondary">Cancel</a>
       </form>
     </div>
 
     <script>
-      document
-        .getElementById("competitionForm")
-        .addEventListener("submit", function (event) {
+      document.getElementById("competitionForm").addEventListener("submit", function(event) {
+        const errorMessages = [];
+        
+        const competitionName = document.getElementById("competition_name").value.trim();
+        const date = document.getElementById("date").value;
+        const time = document.getElementById("time").value;
+        const description = document.getElementById("description").value.trim();
+
+        // Validation
+        if (!/^[A-Za-z\s]{3,50}$/.test(competitionName)) {
+          errorMessages.push("Competition name must be 3-50 characters and contain only letters and spaces");
           event.preventDefault();
-          const errorMessages = [];
+        }
 
-          const competitionName = document
-            .getElementById("competition_name")
-            .value.trim();
-          const date = document.getElementById("date").value;
-          const time = document.getElementById("time").value;
-          const description = document
-            .getElementById("description")
-            .value.trim();
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time part for proper date comparison
+        
+        if (selectedDate < today) {
+          errorMessages.push("Competition date cannot be in the past");
+          event.preventDefault();
+        }
 
-          // Validation
-          if (!/^[A-Za-z\s]{3,50}$/.test(competitionName)) {
-            errorMessages.push(
-              "Competition name must be 3-50 characters and contain only letters and spaces"
-            );
-          }
+        if (description.length < 10 || description.length > 200) {
+          errorMessages.push("Description must be between 10 and 200 characters");
+          event.preventDefault();
+        }
 
-          const selectedDate = new Date(date);
-          const today = new Date();
-          if (selectedDate < today) {
-            errorMessages.push("Competition date cannot be in the past");
-          }
-
-          if (description.length < 10 || description.length > 200) {
-            errorMessages.push(
-              "Description must be between 10 and 200 characters"
-            );
-          }
-
-          const errorDiv = document.getElementById("errorMessages");
-          if (errorMessages.length > 0) {
-            errorDiv.innerHTML = errorMessages.join("<br>");
-            return;
-          }
-
-          // If validation passes
+        const errorDiv = document.getElementById("errorMessages");
+        if (errorMessages.length > 0) {
+          errorDiv.innerHTML = errorMessages.join("<br>");
+        } else {
           errorDiv.innerHTML = "";
-          alert("Competition added successfully!");
-          this.reset();
-        });
+        }
+      });
     </script>
   </body>
 </html>

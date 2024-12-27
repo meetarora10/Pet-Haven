@@ -79,47 +79,66 @@ def validate_service_data(title, date, time, description):
         errors.append("Description must be at least 10 characters long")
         
     return errors
-@app.route('/add_competition')
+@app.route('/add_competition', methods=['GET', 'POST'])
 def add_competition():
     if request.method == 'POST':
         try:
             # Get form data
-            title = request.form.get('title', '').strip()
-            date = request.form.get('date', '').strip()
-            time = request.form.get('time', '').strip()
-            description = request.form.get('description', '').strip()
-            
-            # Validate input
-            errors = validate_service_data(title, date, time, description)
-            
-            if errors:
-                for error in errors:
-                    flash(error, 'danger')
-                return redirect(url_for('add_competition'))
-                
+            title = request.form.get('competition_name')
+            date = request.form.get('date')
+            time = request.form.get('time')
+            description = request.form.get('description')
+
+            # Validate required fields
+            if not all([title, date, time, description]):
+                flash("All fields are required!", "danger")
+                return render_template('add_competition.html')
+
+            # Format date to match the existing format (assuming input is YYYY-MM-DD)
+            try:
+                from datetime import datetime
+                date_obj = datetime.strptime(date, '%Y-%m-%d')
+                formatted_date = date_obj.strftime('%d-%m-%Y')
+            except ValueError as e:
+                flash("Invalid date format!", "danger")
+                return render_template('add_competition.html')
+
+            # Format time to match the existing format (assuming input is HH:MM)
+            try:
+                time_obj = datetime.strptime(time, '%H:%M')
+                formatted_time = time_obj.strftime('%I:%M %p').lower()
+            except ValueError as e:
+                flash("Invalid time format!", "danger")
+                return render_template('add_competition.html')
+
             # Create new service
-            new_service = Service(
+            new_competition = Service(
                 title=title,
-                date=date,
-                time=time,
+                date=formatted_date,
+                time=formatted_time,
                 description=description
             )
-            
-            # Add to database
-            db.session.add(new_service)
-            db.session.commit()
-            
-            flash('New event added successfully!', 'success')
-            return redirect(url_for('admin'))
-            
+
+            # Add to database with error handling
+            try:
+                db.session.add(new_competition)
+                db.session.commit()
+                flash("Competition added successfully!", "success")
+                return redirect(url_for('admin'))
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"Database error while adding competition: {e}")
+                flash(f"Database error: {str(e)}", "danger")
+                return render_template('add_competition.html')
+
         except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error adding new service: {str(e)}")
-            flash('An error occurred while adding the event', 'danger')
-            return redirect(url_for('add_competition'))
-    
-    # GET request - show the form
+            logger.error(f"Error during competition addition: {e}")
+            flash(f"Error: {str(e)}", "danger")
+            return render_template('add_competition.html')
+
+    # GET request
     return render_template('add_competition.html')
+
 @app.route('/delete_competition/<int:service_id>', methods=['POST'])
 def delete_competition(service_id):
     try:
