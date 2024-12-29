@@ -152,6 +152,62 @@ def delete_competition(service_id):
         flash('Failed to delete event', 'danger')
     
     return redirect(url_for('admin'))
+@app.route('/edit_competition/<int:service_id>', methods=['GET', 'POST'])
+def edit_competition(service_id):
+    try:
+        service = Service.query.get_or_404(service_id)
+        
+        if request.method == 'POST':
+            # Get form data
+            title = request.form.get('competition_name')
+            date = request.form.get('date')
+            time = request.form.get('time')
+            description = request.form.get('description')
+            capacity = request.form.get('capacity')
+
+            # Validate form data
+            errors = validate_service_data(title, date, time, description)
+            
+            if capacity:
+                try:
+                    capacity = int(capacity)
+                    if capacity < service.registered_count:
+                        errors.append("New capacity cannot be less than current registrations")
+                    elif capacity <= 0:
+                        errors.append("Capacity must be greater than 0")
+                except ValueError:
+                    errors.append("Capacity must be a valid number")
+
+            if errors:
+                for error in errors:
+                    flash(error, "danger")
+                return render_template('edit.html', service=service)
+
+            # Update service details
+            service.title = title
+            service.date = date
+            service.time = time
+            service.description = description
+            if capacity:
+                service.capacity = capacity
+
+            try:
+                db.session.commit()
+                flash("Competition updated successfully!", "success")
+                return redirect(url_for('admin'))
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"Database error while updating competition: {e}")
+                flash("Error updating competition", "danger")
+                return render_template('edit.html', service=service)
+
+    except Exception as e:
+        logger.error(f"Error in edit_competition route: {e}")
+        flash("An error occurred while processing your request", "danger")
+        return redirect(url_for('admin'))
+
+    # GET request
+    return render_template('edit.html', service=service)
 @app.route('/events')
 def events():
     return render_template('events.html')
