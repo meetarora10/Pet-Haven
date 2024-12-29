@@ -4,11 +4,130 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dog Competition Registration</title>
-    <link rel="stylesheet" href="../static/css/style.css" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap"
       rel="stylesheet"
     />
+    <style>
+      body {
+        font-family: "Poppins", serif;
+        font-weight: 100;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+        background: url("static/css/d1.jpg") no-repeat center center/cover;
+        color: black;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+      nav ul {
+        list-style: none;
+        text-align: center;
+        margin-top: 25px;
+      }
+
+      nav ul li {
+        display: inline-block;
+        margin-right: 20px;
+        cursor: pointer;
+        color: white;
+        padding: 5px 20px;
+        border: 1px solid transparent;
+        transition: 0.6s ease;
+        font-weight: bold;
+      }
+
+      nav ul li a {
+        text-decoration: none;
+      }
+      nav ul li:hover {
+        background-color: #24d930;
+        color: #000;
+      }
+      nav ul li.active a {
+        background-color: #5adf35;
+        color: #000;
+      }
+      .cards {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: 30px;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.6);
+        border: 1.5px solid black;
+        border-radius: 8px;
+        padding: 25px;
+        width: 300px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        font-weight: 500;
+      }
+      .card h3 {
+        margin-top: 0;
+      }
+
+      .card p {
+        margin: 10px 0;
+      }
+
+      .card button {
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+        font-size: 14px;
+        border: 1.5px solid black;
+      }
+      .card button:hover {
+        transform: scale(1.05);
+      }
+      .card a {
+        color: white;
+        text-decoration: none;
+      }
+      .card .btn-join {
+        background-color: #4caf50;
+        margin-bottom: 10px;
+      }
+      .card .btn-join:hover {
+        background-color: #45a049;
+      }
+      .card .btn-danger {
+        background-color: #f44336;
+      }
+      .card .btn-danger:hover {
+        background-color: #e53935;
+      }
+      .card .btn-edit {
+        background-color: #2196f3;
+        margin-left: 10px;
+      }
+      .card .btn-edit:hover {
+        background-color: #1e88e5;
+      }
+      .card .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .main {
+        max-width: 1200px;
+        margin: auto;
+      }
+
+      .container {
+        text-align: center;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -48,19 +167,30 @@
             <p><strong>Date:</strong> {{ service.date }}</p>
             <p><strong>Time: </strong> {{ service.time }}</p>
             <p><strong>Description: </strong> {{ service.description }}</p>
-            <button>
-              <a
-                href="{{ url_for('register', service_id=service.id) }}"
-                style="text-decoration: none"
+
+            <!-- Join Button -->
+            <button class="btn-join">
+              <a href="{{ url_for('register', service_id=service.id) }}"
                 >Join Event</a
               >
             </button>
-            <form action="{{ url_for('delete_competition', service_id=service.id) }}" method="POST" 
-            onsubmit="return confirm('Are you sure you want to delete this event?');">
-      <button type="submit" class="btn btn-danger">Delete</button>
-  </form>
-  <a href="{{ url_for('edit_competition', service_id=service.id) }}" 
-  class="btn btn-edit">Edit</a>
+
+            <!-- Delete and Edit Buttons -->
+            <div class="button-group">
+              <form
+                action="{{ url_for('delete_competition', service_id=service.id) }}"
+                method="POST"
+                onsubmit="return confirm('Are you sure you want to delete this event?');"
+              >
+                <button type="submit" class="btn-danger">Delete</button>
+              </form>
+              <button class="btn-edit">
+                <a
+                  href="{{ url_for('edit_competition', service_id=service.id) }}"
+                  >Edit</a
+                >
+              </button>
+            </div>
           </div>
           {% else %}
           <p>No services available</p>
@@ -68,7 +198,5 @@
         </div>
       </section>
     </div>
-
-    <script src="../static/js/script.js"></script>
   </body>
 </html>

@@ -1,10 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit Competition</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <style>
+        /* Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Poppins", sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Container Styles */
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            border: 1.5px solid rgba(0, 0, 0, 0.1);
+            padding: 32px;
+        }
+
+        /* Typography */
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 32px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+            font-size: 15px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+            line-height: 1.5;
+        }
+
+        /* Button Styles */
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 32px;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .btn-secondary {
+            background-color: #2196f3;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #1e88e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+        }
+
+        /* Alert Styles */
+        .alert {
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -21,29 +176,48 @@
         <form method="POST" class="competition-form">
             <div class="form-group">
                 <label for="competition_name">Competition Name:</label>
-                <input type="text" id="competition_name" name="competition_name" 
-                       value="{{ service.title }}" required>
+                <input
+                    type="text"
+                    id="competition_name"
+                    name="competition_name"
+                    value="{{ service.title }}"
+                    required
+                />
             </div>
 
             <div class="form-group">
                 <label for="date">Date:</label>
-                <input type="text" id="date" name="date" 
-                       value="{{ service.date }}" 
-                       placeholder="DD-MM-YYYY" required>
+                <input
+                    type="text"
+                    id="date"
+                    name="date"
+                    value="{{ service.date }}"
+                    placeholder="DD-MM-YYYY"
+                    required
+                />
             </div>
 
             <div class="form-group">
                 <label for="time">Time:</label>
-                <input type="text" id="time" name="time" 
-                       value="{{ service.time }}"
-                       placeholder="HH:MM am/pm" required>
+                <input
+                    type="text"
+                    id="time"
+                    name="time"
+                    value="{{ service.time }}"
+                    placeholder="HH:MM am/pm"
+                    required
+                />
             </div>
 
             <div class="form-group">
                 <label for="description">Description:</label>
-                <textarea id="description" name="description" 
-                          required>{{ service.description }}</textarea>
+                <textarea 
+                    id="description" 
+                    name="description" 
+                    required
+                >{{ service.description }}</textarea>
             </div>
+
             <div class="button-group">
                 <button type="submit" class="btn btn-primary">Update Competition</button>
                 <a href="{{ url_for('admin') }}" class="btn btn-secondary">Cancel</a>
