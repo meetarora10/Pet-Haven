@@ -3,31 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Registered Events</title>
+    <title>Registered Candidates</title>
     <link rel="stylesheet" href="../static/css/myevents.css">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>My Registered Events</h1>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="{{ url_for('home') }}">Dog Competition Events</a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('events') }}">Events</a></li>
+            <li><a href="{{ url_for('myevents') }}" class="active">Registrations</a></li>
+            <li><a href="{{ url_for('schedule') }}">Schedule</a></li>
+        </ul>
+    </nav>
 
-    <div class="container">
-        <h2>Registered Competitions</h2>
-        <ul id="my-events-list">
-            {% if users and users|length > 0 %}
-                {% for user in users %}
-                    <li>
-                        Event: {{ user.event }} - 
-                        Dog Name: {{ user.name }} - 
-                        Breed: {{ user.breed }} - 
-                        Age: {{ user.age }} years
-                    </li>
+    <main class="main-content">
+        <h1>Registered Candidates</h1>
+        
+        <div class="container">
+            {% if events_dict %}
+                {% for event_name, registrations in events_dict.items() %}
+                    <div class="event-section">
+                        <h2 class="event-title">{{ event_name }}</h2>
+                        <div class="registration-count">
+                            Total Registrations: {{ registrations|length }}
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="registrations-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Dog Name</th>
+                                        <th>Breed</th>
+                                        <th>Age</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for registration in registrations %}
+                                        <tr>
+                                            <td>{{ registration.id }}</td>
+                                            <td>{{ registration.name }}</td>
+                                            <td>{{ registration.breed }}</td>
+                                            <td>{{ registration.age }} months</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 {% endfor %}
             {% else %}
-                <li>No events have been registered in the database.</li>
+                <div class="empty-state">
+                    <p class="empty-state-text">No registrations found.</p>
+                    <a href="{{ url_for('events') }}" class="btn btn-primary">View Available Events</a>
+                </div>
             {% endif %}
-        </ul>
-    </div>
+        </div>
+    </main>
 
+    <footer class="footer">
+        <p>&copy; 2024 Dog Competition Events. All rights reserved.</p>
+    </footer>
+    
     <script src="../static/js/myevents.js"></script>
 </body>
 </html>

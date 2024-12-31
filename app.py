@@ -21,7 +21,6 @@ class User(db.Model):
     breed = db.Column(db.String(100), nullable=False)
     age = db.Column(db.Integer, nullable=False)
     event = db.Column(db.String(100), nullable=False)
-
 class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -214,7 +213,27 @@ def events():
 
 @app.route('/myevents')
 def myevents():
-    return render_template('myevents.html')
+    try:
+        # Query to get all registrations with event details
+        registrations = db.session.query(User).order_by(User.event).all()
+        
+        # Group registrations by event
+        events_dict = {}
+        for registration in registrations:
+            if registration.event not in events_dict:
+                events_dict[registration.event] = []
+            events_dict[registration.event].append({
+                'id': registration.id,
+                'name': registration.name,
+                'breed': registration.breed,
+                'age': registration.age,
+            })
+        
+        return render_template('myevents.html', events_dict=events_dict)
+    except Exception as e:
+        logger.error(f"Error fetching registrations: {e}")
+        flash("Error loading registrations", "danger")
+        return redirect(url_for('home'))
 
 @app.route('/payments')
 def payments():

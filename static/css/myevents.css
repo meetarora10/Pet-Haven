@@ -22,18 +22,105 @@ h1, h2 {
     border: 1px solid black;
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    padding: 1.5rem;
 }
-
-#my-events-list {
-    list-style: none;
-    padding: 0;
-}
-
-#my-events-list li {
-    margin: 10px 0;
+.navbar{
+    background-color: #333;
+    color: white;
     padding: 10px;
-    background: #e7f3fe;
-    border-radius: 8px;
     text-align: center;
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+nav ul li{
+    padding: 10px;
+}
+nav ul li a{
+    color: white;
+    text-decoration: none;
+}
+.event-title {
+    color: var(--primary-color);
+    margin: 0 0 1rem 0;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+}
+
+.registration-count {
+    color: #666;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+.registrations-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.registrations-table th,
+.registrations-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.registrations-table th {
+    background-color: var(--table-header-bg);
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.registrations-table tbody tr:nth-child(even) {
+    background-color: var(--table-stripe-bg);
+}
+
+.registrations-table tbody tr:hover {
+    background-color: rgba(74, 144, 226, 0.1);
+}
+
+/* Empty state styles */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+}
+
+.empty-state-text {
+    color: #666;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .event-section {
+        padding: 1rem;
+    }
+
+    .registrations-table th,
+    .registrations-table td {
+        padding: 0.5rem;
+    }
+
+    .event-title {
+        font-size: 1.5rem;
+    }
+
+    .registration-count {
+        font-size: 0.9rem;
+    }
 }
