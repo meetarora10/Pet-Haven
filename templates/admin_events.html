@@ -3,23 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registered Candidates</title>
+    <title>All Registrations</title>
     <link rel="stylesheet" href="../static/css/myevents.css">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
     <main class="main-content">
-        <h1>Registered Candidates</h1>
+        <h1>All Event Registrations</h1>
         
         <div class="container">
             {% if events_dict %}
                 {% for event_name, registrations in events_dict.items() %}
                     <div class="event-section">
-                        <h2 class="event-title">{{ event_name }}</h2>                        
+                        <h2 class="event-title">{{ event_name }}</h2>
+                        <div class="registration-count">
+                            Total Registrations: {{ registrations|length }}
+                        </div>
+                        
                         <div class="table-responsive">
                             <table class="registrations-table">
                                 <thead>
                                     <tr>
+                                        <th>ID</th>
                                         <th>Dog Name</th>
                                         <th>Breed</th>
                                         <th>Age</th>
@@ -28,6 +33,7 @@
                                 <tbody>
                                     {% for registration in registrations %}
                                         <tr>
+                                            <td>{{ registration.id }}</td>
                                             <td>{{ registration.name }}</td>
                                             <td>{{ registration.breed }}</td>
                                             <td>{{ registration.age }} months</td>
@@ -41,7 +47,7 @@
             {% else %}
                 <div class="empty-state">
                     <p class="empty-state-text">No registrations found.</p>
-                    <a href="{{ url_for('events') }}" class="btn btn-primary">View Available Events</a>
+                    <a href="{{ url_for('admin') }}" class="btn btn-primary">Back to Admin Dashboard</a>
                 </div>
             {% endif %}
         </div>
@@ -50,6 +56,5 @@
     <footer class="footer">
         <p>&copy; 2024 Dog Competition Events. All rights reserved.</p>
     </footer>
-
 </body>
 </html>
