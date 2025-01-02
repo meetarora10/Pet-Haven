@@ -1,11 +1,5 @@
-// JavaScript: Payments Section Functionality
-
 document.addEventListener("DOMContentLoaded", () => {
     const paymentForm = document.getElementById("paymentForm");
-    const upiRadio = document.getElementById("upi");
-    const netBankingRadio = document.getElementById("netbanking");
-    const codRadio = document.getElementById("cod");
-
     const upiDetails = document.getElementById("upiDetails");
     const netBankingDetails = document.getElementById("netBankingDetails");
     const confirmation = document.getElementById("confirmation");
@@ -19,33 +13,73 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Handle form submission
-    paymentForm.addEventListener("submit", (event) => {
+    paymentForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        const selectedPayment = paymentForm.paymentMethod.value;
+        // Get the selected payment method
+        const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
 
-        let message = "";
-        if (selectedPayment === "upi") {
-            const upiId = document.getElementById("upiId").value;
-            if (!upiId) {
-                alert("Please enter your UPI ID.");
-                return;
-            }
-            message = `Payment through UPI is selected. UPI ID: ${upiId}`;
-        } else if (selectedPayment === "netbanking") {
-            const bank = document.getElementById("bank").value;
-            if (!bank) {
-                alert("Please select a bank.");
-                return;
-            }
-            message = `Payment through Net Banking is selected. Bank: ${bank}`;
-        } else if (selectedPayment === "cod") {
-            message = "Cash on Delivery is selected.";
+        // First check if any payment method is selected
+        if (!selectedPayment) {
+            alert("Please select a payment method.");
+            return;
         }
 
-        confirmation.textContent = message;
-        paymentForm.reset();
-        upiDetails.style.display = "none";
-        netBankingDetails.style.display = "none";
+        let canProceed = false;
+        const paymentMethod = selectedPayment.value;
+
+        // Validate based on selected payment method
+        switch(paymentMethod) {
+            case "netbanking":
+                const bank = document.getElementById("bank").value;
+                if (!bank || bank === "--Select a Bank--") {
+                    alert("Please select a bank for Net Banking.");
+                } else {
+                    canProceed = true;
+                }
+                break;
+
+            case "upi":
+                const upiId = document.getElementById("upiId").value;
+                if (!upiId) {
+                    alert("Please enter your UPI ID.");
+                } else if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$/.test(upiId)) {
+                    alert("Please enter a valid UPI ID (e.g., username@bank)");
+                } else {
+                    canProceed = true;
+                }
+                break;
+
+            default:
+                alert("Please select a valid payment method.");
+                return;
+        }
+
+        // Only proceed if validation passed
+        if (canProceed) {
+            try {
+                const response = await fetch('/complete_payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        paymentMethod: paymentMethod,
+                        upiId: paymentMethod === "upi" ? document.getElementById("upiId").value : null,
+                        bank: paymentMethod === "netbanking" ? document.getElementById("bank").value : null
+                    })
+                });
+
+                if (response.ok) {
+                    alert("Payment Successful!");
+                    window.location.href = "/";
+                } else {
+                    throw new Error('Payment failed');
+                }
+            } catch (error) {
+                alert("Payment failed. Please try again.");
+                console.error('Error:', error);
+            }
+        }
     });
 });

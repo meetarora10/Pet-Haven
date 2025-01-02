@@ -1,9 +1,9 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, flash,jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash,session
 from flask_sqlalchemy import SQLAlchemy
 import logging
 from datetime import datetime
-# Set up logging
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class Service(db.Model):
     time = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
 
-# Initialize database and add services
+
 with app.app_context():
     try:
         db.create_all()
@@ -78,7 +78,33 @@ def validate_service_data(title, date, time, description):
         errors.append("Description must be at least 10 characters long")
         
     return errors
-@app.route('/add_competition', methods=['GET', 'POST'])
+
+@app.route('/admin/events')
+def admin_events():
+    try:
+        # Query all registrations
+        registrations = db.session.query(User).all()
+        
+        # Group registrations by event
+        events_dict = {}
+        for registration in registrations:
+            if registration.event not in events_dict:
+                events_dict[registration.event] = []
+            events_dict[registration.event].append({
+                'id': registration.id,
+                'name': registration.name,
+                'breed': registration.breed,
+                'age': registration.age,
+            })
+        
+        return render_template('admin_events.html', events_dict=events_dict)
+    except Exception as e:
+        logger.error(f"Error fetching registrations: {e}")
+        flash("Error loading registrations", "danger")
+        return redirect(url_for('admin'))
+    
+
+@app.route('/admin/add_competition', methods=['GET', 'POST'])
 def add_competition():
     if request.method == 'POST':
         try:
@@ -138,7 +164,7 @@ def add_competition():
     # GET request
     return render_template('add_competition.html')
 
-@app.route('/delete_competition/<int:service_id>', methods=['POST'])
+@app.route('/admin/delete_competition/<int:service_id>', methods=['POST'])
 def delete_competition(service_id):
     try:
         service = Service.query.get_or_404(service_id)
@@ -151,7 +177,9 @@ def delete_competition(service_id):
         flash('Failed to delete event', 'danger')
     
     return redirect(url_for('admin'))
-@app.route('/edit_competition/<int:service_id>', methods=['GET', 'POST'])
+
+
+@app.route('/admin/edit_competition/<int:service_id>', methods=['GET', 'POST'])
 def edit_competition(service_id):
     try:
         service = Service.query.get_or_404(service_id)
@@ -207,32 +235,25 @@ def edit_competition(service_id):
 
     # GET request
     return render_template('edit.html', service=service)
-@app.route('/events')
-def events():
-    return render_template('events.html')
 
 @app.route('/myevents')
 def myevents():
     try:
-        # Query to get all registrations with event details
-        registrations = db.session.query(User).order_by(User.event).all()
-        
-        # Group registrations by event
+        latest_registration = db.session.query(User).order_by(User.id.desc()).first()
+
         events_dict = {}
-        for registration in registrations:
-            if registration.event not in events_dict:
-                events_dict[registration.event] = []
-            events_dict[registration.event].append({
-                'id': registration.id,
-                'name': registration.name,
-                'breed': registration.breed,
-                'age': registration.age,
-            })
+        if latest_registration:
+            events_dict[latest_registration.event] = [{
+                'id': latest_registration.id,
+                'name': latest_registration.name,
+                'breed': latest_registration.breed,
+                'age': latest_registration.age,
+            }]
         
         return render_template('myevents.html', events_dict=events_dict)
     except Exception as e:
-        logger.error(f"Error fetching registrations: {e}")
-        flash("Error loading registrations", "danger")
+        logger.error(f"Error fetching registration: {e}")
+        flash("Error loading registration", "danger")
         return redirect(url_for('home'))
 
 @app.route('/payments')
@@ -254,18 +275,15 @@ def register():
 
     if request.method == 'POST':
         try:
-            # Get form data with validation
             name = request.form.get('name')
             breed = request.form.get('breed')
             age = request.form.get('age')
             event = service.title
 
-            # Validate required fields
             if not all([name, breed, age]):
                 flash("All fields are required!", "danger")
                 return render_template('register.html', service=service)
 
-            # Validate age is a positive number
             try:
                 age = int(age)
                 if age < 0:
@@ -274,32 +292,54 @@ def register():
                 flash(f"Invalid age: {str(e)}", "danger")
                 return render_template('register.html', service=service)
 
-            # Create new user
-            new_user = User(
-                name=name,
-                breed=breed,
-                age=age,
-                event=event
-            )
-
-            # Add to database with error handling
-            try:
-                db.session.add(new_user)
-                db.session.commit()
-                return redirect(url_for('payments'))
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Database error during registration: {e}")
-                flash(f"Database error: {str(e)}", "danger")
-                return render_template('register.html', service=service)
+            # Store registration data in session instead of database
+            session['registration_data'] = {
+                'name': name,
+                'breed': breed,
+                'age': age,
+                'event': event
+            }
+            
+            return redirect(url_for('payments'))
 
         except Exception as e:
             logger.error(f"Error during registration process: {e}")
             flash(f"Error: {str(e)}", "danger")
             return render_template('register.html', service=service)
 
-    # GET request
     return render_template('register.html', service=service)
 
+# Add a new route to handle payment completion
+@app.route('/complete_payment', methods=['POST'])
+def complete_payment():
+    try:
+        registration_data = session.get('registration_data')
+        
+        if not registration_data:
+            flash("No registration data found!", "danger")
+            return redirect(url_for('home'))
+        
+        # Create new user with the stored registration data
+        new_user = User(
+            name=registration_data['name'],
+            breed=registration_data['breed'],
+            age=registration_data['age'],
+            event=registration_data['event']
+        )
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        # Clear the session data
+        session.pop('registration_data', None)
+        
+        flash("Registration and payment completed successfully!", "success")
+        return redirect(url_for('myevents'))
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error during payment completion: {e}")
+        flash("Error completing registration", "danger")
+        return redirect(url_for('payments'))
 if __name__ == '__main__':
     app.run(debug=True)
