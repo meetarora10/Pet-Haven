@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash,sess
 from flask_sqlalchemy import SQLAlchemy
 import logging
 import re
-from datetime import datetime
+from datetime import datetime,timezone,timedelta
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -36,8 +36,8 @@ class UserDetails(db.Model):
     email = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(15), nullable=False)
     address = db.Column(db.Text, nullable=False)
-    created_date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
-    created_time = db.Column(db.Time, nullable=False, default=datetime.utcnow().time())
+    created_date = db.Column(db.Date, nullable=False)
+    created_time = db.Column(db.Time, nullable=False)
     # Relationship with User model
     user = db.relationship('User', backref=db.backref('details', uselist=False))
 with app.app_context():
@@ -351,17 +351,23 @@ def register():
 
     return render_template('register.html', service=service)
 
+def get_current_time():
+    now_utc = datetime.now(timezone.utc)
+    # IST is UTC + 5:30
+    ist_offset = timedelta(hours=5, minutes=30)
+    now_ist = now_utc + ist_offset
+    return now_ist.date(), now_ist.time()
+
 # Add a new route to handle payment completion
 @app.route('/complete_payment', methods=['POST'])
 def complete_payment():
+    current_date, current_time = get_current_time()
     try:
         registration_data = session.get('registration_data')
         user_details = session.get('user_details')
         if not registration_data or not user_details:
             flash("No registration or user details data found!", "danger")
             return redirect(url_for('home'))
-        # Get current timestamp
-        current_time = datetime.utcnow()
         # Create new user with the stored registration data
         new_user = User(
             name=registration_data['name'],
@@ -378,8 +384,8 @@ def complete_payment():
             email=user_details['email'],
             phone=user_details['phone'],
             address=user_details['address'],
-            created_date=current_time.date(),
-            created_time=current_time.time()
+            created_date=current_date,
+            created_time=current_time
         )
         
         db.session.add(new_user_details)
