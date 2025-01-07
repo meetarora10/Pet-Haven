@@ -2,6 +2,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash,session
 from flask_sqlalchemy import SQLAlchemy
 import logging
+import re
 from datetime import datetime
 
 logging.basicConfig(level=logging.DEBUG)
@@ -259,7 +260,32 @@ def myevents():
 @app.route('/payments')
 def payments():
     return render_template('payments.html')
+@app.route('/details')
+def details():
+    return render_template('details.html')
+@app.route('/validate_details', methods=['POST'])
+def validate_details():
+    # Retrieve form data
+    name = request.form.get('name')
+    email = request.form.get('email')
+    phone = request.form.get('phone')
+    address = request.form.get('address')
 
+    # Validation logic
+    if not name or not email or not phone or not address:
+        flash("All fields are required!")
+        return redirect('/details')
+
+    if not re.match(r"^[6-9]\d{9}$", phone):
+        flash("Phone number must be 10 digits and start with 6-9!")
+        return redirect('/details')
+
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        flash("Invalid email format!")
+        return redirect('/details')
+
+    # If all validations pass, redirect to the payment page
+    return redirect('/payments')
 @app.route('/schedule')
 def schedule():
     return render_template('schedule.html')
@@ -300,7 +326,7 @@ def register():
                 'event': event
             }
             
-            return redirect(url_for('payments'))
+            return redirect(url_for('details'))
 
         except Exception as e:
             logger.error(f"Error during registration process: {e}")

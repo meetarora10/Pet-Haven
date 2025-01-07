@@ -4,7 +4,7 @@ body {
   font-weight: 100;
   margin: 0;
   padding: 0;
-  background-color: rgb(194, 191, 191);
+  background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(188, 188, 188, 0.5)), url(./d1.jpg) no-repeat center center/cover;
   /* background: url(./d1.jpg) no-repeat center center/cover; */
   color: black;
 }
@@ -50,11 +50,16 @@ nav ul li.active a {
 }
 
 .card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 300px;
+  height: 350px;
   background: rgba(255, 255, 255, 0.6);
   border: 1.5px solid black;
   border-radius: 8px;
-  padding: 25px;
-  width: 300px;
+  padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
   font-weight: 500;
