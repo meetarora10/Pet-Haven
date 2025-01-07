@@ -28,8 +28,18 @@ class Service(db.Model):
     date = db.Column(db.String(100), nullable=False)
     time = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
-
-
+# Add the new UserDetails model after existing models
+class UserDetails(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(15), nullable=False)
+    address = db.Column(db.Text, nullable=False)
+    created_date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
+    created_time = db.Column(db.Time, nullable=False, default=datetime.utcnow().time())
+    # Relationship with User model
+    user = db.relationship('User', backref=db.backref('details', uselist=False))
 with app.app_context():
     try:
         db.create_all()
@@ -283,7 +293,13 @@ def validate_details():
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         flash("Invalid email format!")
         return redirect('/details')
-
+        # Store details in session
+    session['user_details'] = {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'address': address
+    }
     # If all validations pass, redirect to the payment page
     return redirect('/payments')
 @app.route('/schedule')
@@ -340,11 +356,12 @@ def register():
 def complete_payment():
     try:
         registration_data = session.get('registration_data')
-        
-        if not registration_data:
-            flash("No registration data found!", "danger")
+        user_details = session.get('user_details')
+        if not registration_data or not user_details:
+            flash("No registration or user details data found!", "danger")
             return redirect(url_for('home'))
-        
+        # Get current timestamp
+        current_time = datetime.utcnow()
         # Create new user with the stored registration data
         new_user = User(
             name=registration_data['name'],
@@ -352,13 +369,26 @@ def complete_payment():
             age=registration_data['age'],
             event=registration_data['event']
         )
-        
         db.session.add(new_user)
         db.session.commit()
+        # Create user details record
+        new_user_details = UserDetails(
+            user_id=new_user.id,
+            name=user_details['name'],
+            email=user_details['email'],
+            phone=user_details['phone'],
+            address=user_details['address'],
+            created_date=current_time.date(),
+            created_time=current_time.time()
+        )
+        
+        db.session.add(new_user_details)
+        db.session.commit()
+        
         
         # Clear the session data
         session.pop('registration_data', None)
-        
+        session.pop('user_details', None)
         flash("Registration and payment completed successfully!", "success")
         return redirect(url_for('myevents'))
         
