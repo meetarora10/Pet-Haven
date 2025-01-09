@@ -4,9 +4,20 @@ from flask_sqlalchemy import SQLAlchemy
 import logging
 import re
 from datetime import datetime,timezone,timedelta
-
+from twilio.rest import Client
+from twilio.base.exceptions import TwilioRestException
+import os
+from dotenv import load_dotenv
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Load environment variables
+load_dotenv()
+
+# Twilio configuration from environment variables
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 
 app = Flask(__name__)
 app.secret_key = 'secret'
@@ -40,6 +51,15 @@ class UserDetails(db.Model):
     created_time = db.Column(db.Time, nullable=False)
     # Relationship with User model
     user = db.relationship('User', backref=db.backref('details', uselist=False))
+
+class SMSLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    phone_number = db.Column(db.String(10))
+    event_id = db.Column(db.Integer, db.ForeignKey('service.id'))
+    sent_at = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(20))
+
 with app.app_context():
     try:
         db.create_all()
@@ -358,10 +378,91 @@ def get_current_time():
     now_ist = now_utc + ist_offset
     return now_ist.date(), now_ist.time()
 
+current_date, current_time = get_current_time()
+
+def validate_phone_number(phone):
+    """
+    Validate Indian phone numbers
+    Returns cleaned number if valid, None if invalid
+    """
+    # Remove any spaces or special characters
+    cleaned = re.sub(r'[^0-9]', '', phone)
+    
+    # Check if it's a valid Indian mobile number
+    if re.match(r'^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[6789]\d{9}$', cleaned):
+        # Return last 10 digits only
+        return cleaned[-10:]
+    return None
+def send_registration_sms(phone_number, event_details, name):
+    """
+    Send SMS notification for successful registration with enhanced security
+    
+    Args:
+        phone_number (str): Recipient's phone number
+        event_details (dict): Dictionary containing event details
+        name (str): Name of the registrant
+    """
+    try:
+        # Validate environment variables
+        if not all([TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER]):
+            logger.error("Twilio credentials not properly configured")
+            return False
+            
+        # Validate phone number
+        validated_number = validate_phone_number(phone_number)
+        if not validated_number:
+            logger.error(f"Invalid phone number format: {phone_number}")
+            return False
+            
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        
+        # Format the message with sanitized inputs
+        message_body = (
+            f"Hello {name.strip()}!\n\n"
+            f"Your registration for {event_details['event']} has been confirmed.\n"
+            f"Event Details:\n"
+            f"Date: {event_details['date']}\n"
+            f"Time: {event_details['time']}\n\n"
+            f"Location: Will be shared soon\n\n"
+            f"Thank you for registering!\n"
+        )
+        
+        # Send the message
+        message = client.messages.create(
+            body=message_body,
+            from_=TWILIO_PHONE_NUMBER,
+            to=f"+91{validated_number}"
+        )
+        
+        # Log success with minimal sensitive data
+        logger.info(f"SMS sent successfully. Message SID: {message.sid}")
+        
+        # Store SMS metadata in database
+        sms_log = SMSLog(
+            user_id=event_details.get('user_id'),
+            phone_number=validated_number,
+            event_id=event_details.get('event_id'),
+            sent_at=datetime.now(),
+            status='success'
+        )
+        db.session.add(sms_log)
+        db.session.commit()
+        
+        return True
+        
+    except TwilioRestException as e:
+        logger.error(f"Twilio error: {str(e)}")
+        return False
+    except Exception as e:
+        logger.error(f"Error sending SMS: {str(e)}")
+        return False
+
+
+
 # Add a new route to handle payment completion
 @app.route('/complete_payment', methods=['POST'])
 def complete_payment():
-    current_date, current_time = get_current_time()
+    
     try:
         registration_data = session.get('registration_data')
         user_details = session.get('user_details')
@@ -391,6 +492,30 @@ def complete_payment():
         db.session.add(new_user_details)
         db.session.commit()
         
+        # Get event details for the SMS
+        event = Service.query.filter_by(title=registration_data['event']).first()
+        if event:
+            event_details = {
+                'event': event.title,
+                'date': event.date,
+                'time': event.time,
+                'event_id': event.id,
+                'user_id': new_user.id
+            }
+            
+            try:
+                # Send SMS notification with rate limiting
+                sms_sent = send_registration_sms(
+                    user_details['phone'],
+                    event_details,
+                    user_details['name']
+                )
+                
+                if not sms_sent:
+                    logger.warning("SMS notification could not be sent")
+            except Exception as e:
+                logger.error(f"SMS sending failed: {str(e)}")
+                # Continue with registration even if SMS fails
         
         # Clear the session data
         session.pop('registration_data', None)
