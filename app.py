@@ -16,13 +16,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-class User(db.Model):
+class DogDetails(db.Model):
+    __tablename__ = 'dog_details'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     breed = db.Column(db.String(100), nullable=False)
     age = db.Column(db.Integer, nullable=False)
     event = db.Column(db.String(100), nullable=False)
-class Service(db.Model):
+class Competition(db.Model):
+    __tablename__ = 'competition'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     date = db.Column(db.String(100), nullable=False)
@@ -30,8 +32,9 @@ class Service(db.Model):
     description = db.Column(db.Text, nullable=False)
 # Add the new UserDetails model after existing models
 class UserDetails(db.Model):
+    __tablename__ = 'user_details'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('dog_details.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(15), nullable=False)
@@ -39,19 +42,19 @@ class UserDetails(db.Model):
     created_date = db.Column(db.Date, nullable=False)
     created_time = db.Column(db.Time, nullable=False)
     # Relationship with User model
-    user = db.relationship('User', backref=db.backref('details', uselist=False))
+    user = db.relationship('DogDetails', backref=db.backref('details', uselist=False))
 with app.app_context():
     try:
         db.create_all()
         logger.info("Database tables created successfully")
         
-        if not Service.query.first():
+        if not Competition.query.first():
             services = [
-                Service(title="Agility Challenge", date="24-03-2025", time="10:00 am", 
+                Competition(title="Agility Challenge", date="24-03-2025", time="10:00 am", 
                        description="Test your dog's ability to complete an obstacle course following the commands."),
-                Service(title="Obedience Trial", date="25-03-2025", time="12:00 am", 
+                Competition(title="Obedience Trial", date="25-03-2025", time="12:00 am", 
                        description="Dog and handler perform a series of obedience exercises to demonstrate their training."),
-                Service(title="Best Costume Show", date="26-03-2025", time="12:00 am", 
+                Competition(title="Best Costume Show", date="26-03-2025", time="12:00 am", 
                        description="Elegant Tails, Happy Hearts"),  
             ]
             db.session.add_all(services)
@@ -62,12 +65,12 @@ with app.app_context():
 
 @app.route('/')
 def home():
-    services = Service.query.all()
+    services = Competition.query.all()
     return render_template('index.html', services=services)
 
 @app.route('/admin')
 def admin():
-    services = Service.query.all()
+    services = Competition.query.all()
     return render_template('admin.html', services=services)
 def validate_service_data(title, date, time, description):
     errors = []
@@ -94,7 +97,7 @@ def validate_service_data(title, date, time, description):
 def admin_events():
     try:
         # Query all registrations
-        registrations = db.session.query(User).all()
+        registrations = db.session.query(DogDetails).all()
         
         # Group registrations by event
         events_dict = {}
@@ -148,7 +151,7 @@ def add_competition():
                 return render_template('add_competition.html')
 
             # Create new service
-            new_competition = Service(
+            new_competition = Competition(
                 title=title,
                 date=formatted_date,
                 time=formatted_time,
@@ -178,7 +181,7 @@ def add_competition():
 @app.route('/admin/delete_competition/<int:service_id>', methods=['POST'])
 def delete_competition(service_id):
     try:
-        service = Service.query.get_or_404(service_id)
+        service = Competition.query.get_or_404(service_id)
         db.session.delete(service)
         db.session.commit()
         flash('Event deleted successfully!', 'success')
@@ -193,7 +196,7 @@ def delete_competition(service_id):
 @app.route('/admin/edit_competition/<int:service_id>', methods=['GET', 'POST'])
 def edit_competition(service_id):
     try:
-        service = Service.query.get_or_404(service_id)
+        service = Competition.query.get_or_404(service_id)
         
         if request.method == 'POST':
             # Get form data
@@ -250,7 +253,7 @@ def edit_competition(service_id):
 @app.route('/myevents')
 def myevents():
     try:
-        latest_registration = db.session.query(User).order_by(User.id.desc()).first()
+        latest_registration = db.session.query(DogDetails).order_by(DogDetails.id.desc()).first()
 
         events_dict = {}
         if latest_registration:
@@ -309,7 +312,7 @@ def schedule():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     service_id = request.args.get('service_id')
-    service = Service.query.get(service_id)
+    service = Competition.query.get(service_id)
 
     if not service:
         flash("Service not found!", "danger")
@@ -369,7 +372,7 @@ def complete_payment():
             flash("No registration or user details data found!", "danger")
             return redirect(url_for('home'))
         # Create new user with the stored registration data
-        new_user = User(
+        new_user = DogDetails(
             name=registration_data['name'],
             breed=registration_data['breed'],
             age=registration_data['age'],
