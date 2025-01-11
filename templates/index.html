@@ -14,6 +14,7 @@
                 <ul>
                     <li><a href="{{ url_for('schedule') }}" style="text-decoration:none">Schedule</a></li>
                     <li><a href="{{ url_for('myevents') }}" style="text-decoration:none">My Events</a></li>
+                    <li><a href="{{ url_for('cart') }}" style="text-decoration:none">Cart</a></li>
                 </ul>
             </nav>
             <h1>Dog Competition Registration and Scheduling</h1>
@@ -32,6 +33,7 @@
                     <p><strong>Description: </strong> {{ service.description }}</p>
                     <p><strong>Price: ₹</strong> {{ service.price }}</p>
                     <button><a href="{{ url_for('register', service_id=service.id) }}" style="text-decoration:none">Join Event</a></button>
+                    <button class="add-to-cart" data-id="{{ service.id }}">Add to Cart</button>
                 </div>
                 {% else %}
                 <p>No services available</p>

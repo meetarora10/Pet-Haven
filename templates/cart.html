@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart - Canine Commerce</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap">
+</head>
+<body>
+    <div class="main-container">
+        <section class="cart-items">
+            <h3><center>Shopping Cart <i class="fas fa-shopping-cart"></i></center></h3>
+            <br>
+            {% if cart_items %}
+                {% for item in cart_items %}
+                    <div class="cart-item">
+                        <div class="cart-item-details">
+                            <h4>{{ item['title'] }}</h4>
+                            <p>Date: {{ item['date']}}</p>
+                            <p>Time: {{ item['time']}}</p>
+                            <p>Price: ₹ {{ item['price'] }}</p>
+                            <button><a href="{{ url_for('register', service_id=item.id) }}" style="text-decoration:none">Join Event</a></button>
+                        </div>
+                        <div class="cart-item-actions">
+                            <button class="remove-from-cart" data-id="{{ item['id'] }}">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <br><p><center>No items in your cart</center></p><br>
+            {% endif %}
+            <a href="/">
+                <button class="continue-shopping-btn">Continue Shopping</button>
+            </a>
+        </section>
+        
+        <aside class="order-summary">
+            <h3><center>Order Summary</center></h3>
+            <div class="total-price">
+                <span>Total Price</span>
+                <span id="cart-total">₹ {{ total_price }}</span>
+            </div>
+            {% if cart_items %}
+                <a href="{{ url_for('register') }}">
+                    <button class="buynow-btn">Enter your dog details</button>
+                </a>
+            {% endif %}
+        </aside>
+    </div>
+    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+</body>
+</html>

@@ -5,7 +5,7 @@ import logging
 import re
 from datetime import datetime,timezone,timedelta
 from sqlalchemy.exc import SQLAlchemyError
-
+from flask_login import UserMixin
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -18,6 +18,30 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+    mobile_number = db.Column(db.String(15), unique=True)
+    role = db.Column(db.String(50), nullable=False)
+    verified = db.Column(db.Boolean, default=False)  # Added verified field
+    last_login = db.Column(db.DateTime)
+
+    def _repr_(self):
+        return f'<User {self.name}>'
+
+    def get_id(self):
+        return str(self.id)  # Flask-Login expects a string for the user ID
+    
+    def is_active(self):
+        return True  # Assume the user is always active (you can add more logic if needed)
+
+    def is_authenticated(self):
+        return True  # Return True if the user is authenticated
+   
+    def is_anonymous(self):
+        return False  # Return False for regular users (anonymous should be for unauthenticated users)
 # Add the new UserDetails model after existing models
 class UserDetails(db.Model):
     __tablename__ = 'user_details'
@@ -54,7 +78,16 @@ class Competition(db.Model):
 
     def __repr__(self):
         return f'<Competition {self.title}>'
-
+class Cart(db.Model):
+    __tablename__ = 'cart'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    service_id = db.Column(db.Integer, db.ForeignKey('competition.id'), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    date = db.Column(db.String(100), nullable=False)
+    time = db.Column(db.String(100), nullable=False)
+    price = db.Column(db.Integer, nullable=False)
+    # Relationship with User and Competition models
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 with app.app_context():
     try:
@@ -304,6 +337,78 @@ def edit_competition(service_id):
 
     # GET request
     return render_template('edit.html', service=service)
+@app.route('/add_to_cart', methods=['POST'])
+def add_to_cart():
+    try:
+        data = request.get_json()
+        service_id = data.get('service_id')
+        user_id = 1  # In production, this should be the logged-in user's ID
+        
+        # Check if service exists
+        service = Competition.query.get_or_404(service_id)
+        
+        # Check if item already in cart
+        existing_cart_item = Cart.query.filter_by(
+            service_id=service_id,
+            user_id=user_id
+        ).first()
+        
+        if existing_cart_item:
+            return jsonify({
+                'message': 'Item already in cart',
+                'total_price': sum(item.price for item in Cart.query.filter_by(user_id=user_id).all())
+            }), 200
+            
+        # Add new item to cart
+        new_cart_item = Cart(
+            service_id=service_id,
+            user_id=user_id,
+            title=service.title,
+            date=service.date,
+            time=service.time,
+            price=service.price
+        )
+        
+        db.session.add(new_cart_item)
+        db.session.commit()
+        
+        # Calculate new total
+        total_price = sum(item.price for item in Cart.query.filter_by(user_id=user_id).all())
+        
+        return jsonify({
+            'message': 'Item added to cart successfully',
+            'total_price': total_price
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error adding to cart: {str(e)}")
+        return jsonify({'message': 'Error adding item to cart'}), 500
+
+@app.route('/cart')
+def cart():
+    try:
+        user_id = 1  # In production, this should be the logged-in user's ID
+        cart_items = Cart.query.filter_by(user_id=user_id).all()
+        total_price = sum(item.price for item in cart_items)
+        return render_template('cart.html', cart_items=cart_items, total_price=total_price)
+    except Exception as e:
+        logger.error(f"Error accessing cart: {str(e)}")
+        flash("Error accessing cart", "danger")
+        return redirect(url_for('home'))
+
+
+@app.route('/remove_from_cart/<int:service_id>', methods=['POST'])
+def remove_from_cart(service_id):
+    try:
+        cart_item = Cart.query.get_or_404(service_id)
+        db.session.delete(cart_item)
+        db.session.commit()
+        return jsonify({'message': 'Item removed from cart successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error removing from cart: {str(e)}")
+        return jsonify({'message': 'Error removing item from cart'}), 500
 
 
 @app.route('/myevents')
@@ -422,9 +527,8 @@ def complete_payment():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     service_id = request.args.get('service_id')
-    # Updated from Competition.query.get() to db.session.get()
-    service = db.session.get(Competition, service_id)
-    
+    service = Competition.query.get(service_id)
+
     if not service:
         flash("Service not found!", "danger")
         return redirect(url_for('home'))
@@ -448,21 +552,18 @@ def register():
                 flash(f"Invalid age: {str(e)}", "danger")
                 return render_template('register.html', service=service)
 
-            # Create and save dog details
-            dog = DogDetails(name=name, breed=breed, age=age, event=event)
-            db.session.add(dog)
-            db.session.commit()
-
-            # Create cart item
-            cart_item = Cart(dog_id=dog.id, competition_id=service.id)
-            db.session.add(cart_item)
-            db.session.commit()
-
-            flash("Registration successful! Dog added to cart.", "success")
-            return redirect(url_for('cart'))
+            # Store registration data in session instead of database
+            session['registration_data'] = {
+                'name': name,
+                'breed': breed,
+                'age': age,
+                'event': event
+            }
+            
+            return redirect(url_for('details'))
 
         except Exception as e:
-            db.session.rollback()
+            logger.error(f"Error during registration process: {e}")
             flash(f"Error: {str(e)}", "danger")
             return render_template('register.html', service=service)
 

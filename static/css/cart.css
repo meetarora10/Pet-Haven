@@ -1,0 +1,244 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+  
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .logo img {
+    height: 60px;
+    width: 80px;
+    object-fit: contain;
+    background-color: transparent;
+    display: block;
+  }
+  
+  .logo span {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff; 
+    font-family: 'Pacifico', cursive; 
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .logo span::after {
+    content: '\f1b0'; 
+    font-family: 'Font Awesome 5 Free'; 
+    font-weight: 900;
+    font-size: 1.2rem;
+    color: black; 
+  }
+  
+  .nav-links {
+    list-style: none;
+     display: flex;
+     justify-content: space-around; 
+     align-items: center;
+     gap: 0; 
+     margin: 0;
+     padding: 0;
+    }
+  
+  
+  .nav-links li a {
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-links li a:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  @media (max-width: 768px) {
+  .navbar .dropdown .dropdown-menu {
+    position: static;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+  }
+  
+  .navbar .dropdown .dropdown-menu li a {
+    padding: 0.75rem 1rem;
+  }
+  }
+  
+  .main-container {
+      display: flex;
+      max-width: 1300px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+  }
+  
+  .cart-items {
+      flex: 2;
+      margin-right: 2rem;
+  }
+  
+  .cart-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #ddd;
+  }
+  
+  .cart-item img {
+      width: 150px;
+      height: 100px;
+      object-fit: cover;
+      margin-right: 1rem;
+      border-radius: 10px;
+  }
+  
+  
+  .cart-item-details {
+      flex-grow: 1;
+      flex-direction: column; 
+      flex-grow: 1;
+  }
+  
+  .cart-item-details h4 {
+      margin: 0 0 0.5rem 0;
+      color: #444;
+      font-weight: 600;
+      font-size: 18px; 
+      font-family: 'Times New Roman', Times, serif;
+      text-align: left;
+  }
+  
+  .cart-item-details p {
+      margin: 0.25rem 0;
+      color: #555;
+      font-size: 16px;
+      font-family: 'Times New Roman', Times, serif;
+      text-align: left;
+      
+  }
+  .cart-item-actions .remove-from-cart{
+      background-color: transparent;
+      color: #dc3545;
+      border: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+  
+  }
+  
+  .cart-item-actions button {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: 5px;
+      cursor: pointer;
+      
+  }
+  
+  .cart-item-actions button {
+      background-color: #f0f0f0;
+      color: #333;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 0 0.5rem;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+  }
+  
+  .cart-item-actions button:hover {
+      transform: translateY(-2px);
+  }
+  
+  
+  .cart-item-actions .quantity {
+      display: inline-block;
+      width: 30px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #444;
+      font-family: 'Times New Roman', Times, serif;
+  }
+  
+  .order-summary {
+      flex: 1;
+      padding: 1.5rem;
+      border-left: 1px solid #ddd;
+      background: #f7f7f7;
+      border-radius: 10px;
+  }
+  
+  .order-summary div {
+          margin-bottom: 1rem;
+          display: flex;
+          justify-content: space-between;
+          font-size: 16px; /* Adjusted font size */
+          color: #333;
+          font-family: 'Times New Roman', Times, serif;
+      }
+  
+  
+  .buynow-btn {
+      background-color: #007bff;
+      color: #fff;
+      padding: 0.8rem;
+      border: none;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 1.2rem;
+      transition: background-color 0.2s ease;
+  }
+  
+  .buynow-btn:hover {
+      background-color: #0056b3;
+  }
+  
+  .continue-shopping-btn {
+      background-color: #28a745;
+      color: #fff;
+      padding: 0.8rem;
+      border: none;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+  }
+  
+  .continue-shopping-btn:hover {
+      background-color: #218838;
+  }
+  
+  h3 {
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+      color: #222;
+      font-size: 1.5rem;
+      text-align: center;
+  }
+  
+  p {
+    margin: 0.25rem 0;
+    text-align: center; 
+  }
+  
