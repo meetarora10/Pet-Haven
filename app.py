@@ -1,9 +1,11 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, flash,session
+from flask import Flask, render_template, request, redirect, url_for, flash,session,jsonify
 from flask_sqlalchemy import SQLAlchemy
 import logging
 import re
 from datetime import datetime,timezone,timedelta
+from sqlalchemy.exc import SQLAlchemyError
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -16,20 +18,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-class DogDetails(db.Model):
-    __tablename__ = 'dog_details'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    breed = db.Column(db.String(100), nullable=False)
-    age = db.Column(db.Integer, nullable=False)
-    event = db.Column(db.String(100), nullable=False)
-class Competition(db.Model):
-    __tablename__ = 'competition'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    date = db.Column(db.String(100), nullable=False)
-    time = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text, nullable=False)
 # Add the new UserDetails model after existing models
 class UserDetails(db.Model):
     __tablename__ = 'user_details'
@@ -43,20 +31,64 @@ class UserDetails(db.Model):
     created_time = db.Column(db.Time, nullable=False)
     # Relationship with User model
     user = db.relationship('DogDetails', backref=db.backref('details', uselist=False))
+
+class DogDetails(db.Model):
+    __tablename__ = 'dog_details'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    breed = db.Column(db.String(100), nullable=False)
+    age = db.Column(db.Integer, nullable=False)
+    event = db.Column(db.String(100), nullable=False)
+
+    def __repr__(self):
+        return f'<Dog {self.name}>'
+
+class Competition(db.Model):
+    __tablename__ = 'competition'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    date = db.Column(db.String(100), nullable=False)
+    time = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f'<Competition {self.title}>'
+
+
 with app.app_context():
     try:
         db.create_all()
         logger.info("Database tables created successfully")
         
+        # Check if there are any existing competitions in the database
         if not Competition.query.first():
+            # Define the services list if the database is empty
             services = [
-                Competition(title="Agility Challenge", date="24-03-2025", time="10:00 am", 
-                       description="Test your dog's ability to complete an obstacle course following the commands."),
-                Competition(title="Obedience Trial", date="25-03-2025", time="12:00 am", 
-                       description="Dog and handler perform a series of obedience exercises to demonstrate their training."),
-                Competition(title="Best Costume Show", date="26-03-2025", time="12:00 am", 
-                       description="Elegant Tails, Happy Hearts"),  
+                Competition(
+                    title="Agility Challenge",
+                    date="24-03-2025",
+                    time="10:00 am",
+                    description="Test your dog's ability to complete an obstacle course following the commands.",
+                    price=500
+                ),
+                Competition(
+                    title="Obedience Trial",
+                    date="25-03-2025",
+                    time="12:00 am",
+                    description="Dog and handler perform a series of obedience exercises to demonstrate their training.",
+                    price=600
+                ),
+                Competition(
+                    title="Best Costume Show",
+                    date="26-03-2025",
+                    time="12:00 am",
+                    description="Elegant Tails, Happy Hearts",
+                    price=700
+                ),
             ]
+            
+            # Add the services to the database and commit
             db.session.add_all(services)
             db.session.commit()
             logger.info("Initial services added successfully")
@@ -127,10 +159,20 @@ def add_competition():
             date = request.form.get('date')
             time = request.form.get('time')
             description = request.form.get('description')
+            price = request.form.get('price')
 
             # Validate required fields
-            if not all([title, date, time, description]):
+            if not all([title, date, time, description, price]):
                 flash("All fields are required!", "danger")
+                return render_template('add_competition.html')
+
+            # Validate price to ensure it's a positive number
+            try:
+                price = float(price)
+                if price <= 0:
+                    raise ValueError("Price must be a positive value")
+            except ValueError as e:
+                flash(f"Invalid price: {e}", "danger")
                 return render_template('add_competition.html')
 
             # Format date to match the existing format (assuming input is YYYY-MM-DD)
@@ -150,12 +192,13 @@ def add_competition():
                 flash("Invalid time format!", "danger")
                 return render_template('add_competition.html')
 
-            # Create new service
+            # Create new competition
             new_competition = Competition(
                 title=title,
                 date=formatted_date,
                 time=formatted_time,
-                description=description
+                description=description,
+                price=price  # Add price to the competition
             )
 
             # Add to database with error handling
@@ -177,6 +220,7 @@ def add_competition():
 
     # GET request
     return render_template('add_competition.html')
+
 
 @app.route('/admin/delete_competition/<int:service_id>', methods=['POST'])
 def delete_competition(service_id):
@@ -205,9 +249,18 @@ def edit_competition(service_id):
             time = request.form.get('time')
             description = request.form.get('description')
             capacity = request.form.get('capacity')
+            price = request.form.get('price')  # Get the price from the form
 
             # Validate form data
             errors = validate_service_data(title, date, time, description)
+            
+            if price:
+                try:
+                    price = float(price)
+                    if price <= 0:
+                        errors.append("Price must be a positive value")
+                except ValueError:
+                    errors.append("Price must be a valid number")
             
             if capacity:
                 try:
@@ -231,6 +284,8 @@ def edit_competition(service_id):
             service.description = description
             if capacity:
                 service.capacity = capacity
+            if price:
+                service.price = price  # Update price in the service
 
             try:
                 db.session.commit()
@@ -249,6 +304,7 @@ def edit_competition(service_id):
 
     # GET request
     return render_template('edit.html', service=service)
+
 
 @app.route('/myevents')
 def myevents():
@@ -309,50 +365,6 @@ def validate_details():
 def schedule():
     return render_template('schedule.html')
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    service_id = request.args.get('service_id')
-    service = Competition.query.get(service_id)
-
-    if not service:
-        flash("Service not found!", "danger")
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        try:
-            name = request.form.get('name')
-            breed = request.form.get('breed')
-            age = request.form.get('age')
-            event = service.title
-
-            if not all([name, breed, age]):
-                flash("All fields are required!", "danger")
-                return render_template('register.html', service=service)
-
-            try:
-                age = int(age)
-                if age < 0:
-                    raise ValueError("Age must be positive")
-            except ValueError as e:
-                flash(f"Invalid age: {str(e)}", "danger")
-                return render_template('register.html', service=service)
-
-            # Store registration data in session instead of database
-            session['registration_data'] = {
-                'name': name,
-                'breed': breed,
-                'age': age,
-                'event': event
-            }
-            
-            return redirect(url_for('details'))
-
-        except Exception as e:
-            logger.error(f"Error during registration process: {e}")
-            flash(f"Error: {str(e)}", "danger")
-            return render_template('register.html', service=service)
-
-    return render_template('register.html', service=service)
 
 def get_current_time():
     now_utc = datetime.now(timezone.utc)
@@ -406,5 +418,55 @@ def complete_payment():
         logger.error(f"Error during payment completion: {e}")
         flash("Error completing registration", "danger")
         return redirect(url_for('payments'))
+    
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    service_id = request.args.get('service_id')
+    # Updated from Competition.query.get() to db.session.get()
+    service = db.session.get(Competition, service_id)
+    
+    if not service:
+        flash("Service not found!", "danger")
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name')
+            breed = request.form.get('breed')
+            age = request.form.get('age')
+            event = service.title
+
+            if not all([name, breed, age]):
+                flash("All fields are required!", "danger")
+                return render_template('register.html', service=service)
+
+            try:
+                age = int(age)
+                if age < 0:
+                    raise ValueError("Age must be positive")
+            except ValueError as e:
+                flash(f"Invalid age: {str(e)}", "danger")
+                return render_template('register.html', service=service)
+
+            # Create and save dog details
+            dog = DogDetails(name=name, breed=breed, age=age, event=event)
+            db.session.add(dog)
+            db.session.commit()
+
+            # Create cart item
+            cart_item = Cart(dog_id=dog.id, competition_id=service.id)
+            db.session.add(cart_item)
+            db.session.commit()
+
+            flash("Registration successful! Dog added to cart.", "success")
+            return redirect(url_for('cart'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error: {str(e)}", "danger")
+            return render_template('register.html', service=service)
+
+    return render_template('register.html', service=service)
+
 if __name__ == '__main__':
     app.run(debug=True)
