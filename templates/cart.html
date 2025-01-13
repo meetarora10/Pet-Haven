@@ -44,11 +44,6 @@
                 <span>Total Price</span>
                 <span id="cart-total">₹ {{ total_price }}</span>
             </div>
-            {% if cart_items %}
-                <a href="{{ url_for('register') }}">
-                    <button class="buynow-btn">Enter your dog details</button>
-                </a>
-            {% endif %}
         </aside>
     </div>
     <script src="{{ url_for('static', filename='js/cart.js') }}"></script>

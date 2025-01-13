@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (response.ok) {
                     alert("Payment Successful!");
-                    window.location.href = "/myevents";
+                    window.location.href = "/";
                 } else {
                     throw new Error('Payment failed');
                 }

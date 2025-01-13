@@ -516,7 +516,7 @@ def complete_payment():
         session.pop('registration_data', None)
         session.pop('user_details', None)
         flash("Registration and payment completed successfully!", "success")
-        return redirect(url_for('myevents'))
+        return redirect(url_for('index'))
         
     except Exception as e:
         db.session.rollback()
