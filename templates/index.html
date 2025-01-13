@@ -8,20 +8,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <div class="main">
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('schedule') }}" style="text-decoration:none">Schedule</a></li>
-                    <li><a href="{{ url_for('myevents') }}" style="text-decoration:none">My Events</a></li>
-                    <li><a href="{{ url_for('cart') }}" style="text-decoration:none">Cart</a></li>
-                </ul>
-            </nav>
-            <h1>Dog Competition Registration and Scheduling</h1>
+    <nav class="navbar">
+         <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Competition Category logo">
+            <span>Competition Category</span>
         </div>
-    </header>
-
+        <ul class="nav-links">
+          <li><a href="{{ url_for('schedule') }}" class="nav-link">Schedule</a></li>
+          <li><a href="{{ url_for('myevents') }}" class="nav-link" >Myevents</a></li>
+          <li>
+            <a href="{{ url_for('cart') }}" class="nav-link">
+              <i class="fas fa-shopping-cart"></i> Cart
+            </a>
+          </li>            
+        </ul>
+    </nav>
     <div class="container">
+        <h1>Dog Competition Registration and Scheduling</h1>
         <section class="competition-overview">
             <h2>Competition Categories</h2>
             <div class="cards">
@@ -32,9 +35,13 @@
                     <p><strong>Time: </strong> {{ service.time }}</p>
                     <p><strong>Description: </strong> {{ service.description }}</p>
                     <p><strong>Price: ₹</strong> {{ service.price }}</p>
-                    <button><a href="{{ url_for('register', service_id=service.id) }}" style="text-decoration:none">Join Event</a></button>
-                    <button class="add-to-cart" data-id="{{ service.id }}">Add to Cart</button>
-                </div>
+                    <div class="button-container">
+                        <button>
+                          <a href="{{ url_for('register', service_id=service.id) }}" style="text-decoration:none; color: inherit;">Join Event</a>
+                        </button>
+                        <button class="add-to-cart" data-id="{{ service.id }}">Add to Cart</button>
+                      </div>                      
+                    </div>
                 {% else %}
                 <p>No services available</p>
                 {% endfor %}
