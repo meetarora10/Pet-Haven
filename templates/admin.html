@@ -15,42 +15,75 @@
         margin: 0;
         padding: 0;
         background-color: #f4f4f9;
-        background: url("static/css/d1.jpg") no-repeat center center/cover;
         color: black;
       }
 
-      h1 {
-        text-align: center;
-        color: #333;
-      }
-      nav ul {
-        list-style: none;
-        text-align: center;
-        margin-top: 25px;
-      }
+      /* nav bar  */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #28a745;
+  padding: 1rem 2rem;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position:relative; 
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  z-index: 1000; 
+}
 
-      nav ul li {
-        display: inline-block;
-        margin-right: 20px;
-        cursor: pointer;
-        color: white;
-        padding: 5px 20px;
-        border: 1px solid transparent;
-        transition: 0.6s ease;
-        font-weight: bold;
-      }
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
-      nav ul li a {
-        text-decoration: none;
-      }
-      nav ul li:hover {
-        background-color: #24d930;
-        color: #000;
-      }
-      nav ul li.active a {
-        background-color: #5adf35;
-        color: #000;
-      }
+.logo img {
+  height: 60px;
+  width: 80px;
+  object-fit: contain;
+  background-color: transparent;
+}
+
+.logo span {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+  font-family: 'Pacifico', cursive;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo span::after {
+  content: '\f1b0';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: black;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 2rem; /* Added consistent gap */
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
       .cards {
         display: flex;
         gap: 20px;
@@ -59,8 +92,7 @@
         padding: 30px;
       }
       .card {
-        background: rgba(255, 255, 255, 0.6);
-        border: 1.5px solid black;
+        background: rgba(255, 255, 255);
         border-radius: 8px;
         padding: 25px;
         width: 300px;
@@ -127,37 +159,26 @@
       .container {
         text-align: center;
       }
+      .container h3 {
+        color: #388E3C;
+      }
     </style>
   </head>
   <body>
-    <header>
-      <div class="main">
-        <nav>
-          <ul>
-            <li>
-              <a href="{{ url_for('schedule') }}" style="text-decoration: none"
-                >Schedule</a
-              >
-            </li>
-            <li>
-              <a href="{{ url_for('admin_events') }}" style="text-decoration: none"
-                >Events</a
-              >
-            </li>
-            <li>
-              <a
-                href="{{ url_for('add_competition') }}"
-                style="text-decoration: none"
-                >Add Competition</a
-              >
-            </li>
-          </ul>
-        </nav>
-        <h1>Dog Competition Registration and Scheduling</h1>
-      </div>
-    </header>
+    <nav class="navbar">
+      <div class="logo">
+         <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Competition Category logo">
+         <span>Competition Category</span>
+     </div>
+     <ul class="nav-links">
+       <li><a href="{{ url_for('schedule') }}" class="nav-link">Schedule</a></li>
+       <li><a href="{{ url_for('myevents') }}" class="nav-link" >Myevents</a></li>
+       <li><a href="{{ url_for('add_competition') }}" class="nav-link"> Cart</a> </li>            
+     </ul>
+ </nav>
 
     <div class="container">
+      <h1>Dog Competition Registration and Scheduling</h1>
       <section class="competition-overview">
         <h2>Competition Categories</h2>
         <div class="cards">
